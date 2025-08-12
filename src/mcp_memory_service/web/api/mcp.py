@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from ..dependencies import get_storage
 from ...utils.hashing import generate_content_hash
+from ..sse import create_event_stream, sse_manager
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +103,22 @@ MCP_TOOLS = [
         }
     )
 ]
+
+@router.get("/")
+@router.get("")
+async def events_endpoint(request: Request):
+    """
+    Server-Sent Events endpoint for real-time updates.
+    
+    Provides a continuous stream of events including:
+    - memory_stored: When new memories are added
+    - memory_deleted: When memories are removed
+    - search_completed: When searches finish
+    - health_update: System status changes
+    - heartbeat: Periodic keep-alive signals
+    - connection_established: Welcome message
+    """
+    return await create_event_stream(request)
 
 
 @router.post("/")

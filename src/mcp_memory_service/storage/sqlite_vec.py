@@ -249,20 +249,15 @@ class SqliteVecMemoryStorage(MemoryStorage):
             logger.info(f"Loading embedding model: {self.embedding_model_name}")
             logger.info(f"Using device: {device}")
             
-            # Configure for offline mode if models are cached
+            # Set offline mode to use cached models
             import os
-            # Only set offline mode if we detect cached models to prevent initial downloads
-            hf_home = os.environ.get('HF_HOME', os.path.expanduser("~/.cache/huggingface"))
-            model_cache_path = os.path.join(hf_home, "hub", f"models--sentence-transformers--{self.embedding_model_name.replace('/', '--')}")
-            if os.path.exists(model_cache_path):
-                os.environ['HF_HUB_OFFLINE'] = '1'
-                os.environ['TRANSFORMERS_OFFLINE'] = '1'
+            os.environ['HF_HUB_OFFLINE'] = '1'
+            os.environ['TRANSFORMERS_OFFLINE'] = '1'
             
             # Try to load from cache first, fallback to direct model name
             try:
                 # First try loading from Hugging Face cache
-                hf_home = os.environ.get('HF_HOME', os.path.expanduser("~/.cache/huggingface"))
-                cache_path = os.path.join(hf_home, "hub", f"models--sentence-transformers--{self.embedding_model_name.replace('/', '--')}")
+                cache_path = f"/home/hkr/.cache/huggingface/hub/models--sentence-transformers--{self.embedding_model_name.replace('/', '--')}"
                 if os.path.exists(cache_path):
                     # Find the snapshot directory
                     snapshots_path = os.path.join(cache_path, "snapshots")
@@ -454,12 +449,12 @@ class SqliteVecMemoryStorage(MemoryStorage):
                     INNER JOIN (
                         SELECT rowid, distance 
                         FROM memory_embeddings 
-                        WHERE content_embedding MATCH ?
+                        WHERE content_embedding MATCH ? AND k = ?
                         ORDER BY distance
-                        LIMIT ?
                     ) e ON m.id = e.rowid
                     ORDER BY e.distance
-                ''', (serialize_float32(query_embedding), n_results))
+                    LIMIT ?
+                ''', (serialize_float32(query_embedding), n_results, n_results))
                 
                 # Check if we got results
                 results = cursor.fetchall()
