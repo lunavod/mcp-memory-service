@@ -132,4 +132,4 @@ async def delete_memory(content_hash: str = Query(description="Hash of the memor
 
 # Convert FastAPI app to MCP server
 mcp = FastApiMCP(app, name="Memory API", description="API for managing memories")
-mcp.mount()  # Mounts MCP endpoint at /mcp
+mcp.mount_http()  # Mounts MCP endpoint at /mcp
